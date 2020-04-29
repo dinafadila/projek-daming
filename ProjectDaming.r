@@ -32,7 +32,15 @@ data$Size<-as.numeric(as.character(data$Size))
 data$Price <- as.numeric(as.character(data$Price))
 data$Reviews <- as.numeric(as.character(data$Reviews))
 
+
 data<-data[complete.cases(data),] 
 
 str(data)
+
+# Korelasi
+library(corrplot)
+c<-data.frame(data)
+correlation<-c[,-c(1,2,7,9:13)] #kecuali atribut 9,10
+m<-cor(correlation)
+corrplot(m)
 
