@@ -14,6 +14,7 @@ data<-data[complete.cases(data),]
 md.pattern(data)
 
 # Menghilangkan string + dan , serta mengubah ke numeric
+library(stringr)
 data$Installs<-str_replace_all(data$Installs,"[+]","")
 data$Installs<-str_replace_all(data$Installs,",","")
 
