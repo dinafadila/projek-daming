@@ -18,20 +18,31 @@ library(stringr)
 data$Installs<-str_replace_all(data$Installs,"[+]","")
 data$Installs<-str_replace_all(data$Installs,",","")
 
+# Menghilangkan satuan M pada size
+size_m <- data[grep('M', data$Size),]$Size 
+size_m <- gsub('M', '', size_m) 
+size_m <- as.numeric(size_m) 
 
-# Menghilangkan string M dan k 
-data$Size<-str_replace_all(data$Size,"M","")
-data$Size<-str_replace_all(data$Size,"k","")
+# Menghilangkan satuan K pada size dan diubah ke MB dibagi 1024
+size_k <- data[grep('k', data$Size),]$Size 
+size_k <- gsub('k', '', size_k) 
+size_k <- as.numeric(size_k)/1024 
+
+# Menggabungkan kedua size tersebut
+data$size_norm = NA
+data[grep('k', data$Size),]$size_norm <- size_k
+data[grep('M', data$Size),]$size_norm <- size_m
+
+# Menghapus variable size yg lama
+data$Size <- NULL 
 
 # Menghilangkan string $
 data$Price <- gsub('[$]', '', data$Price)
 
 # Ubah factor ke numeric
 data$Installs<-as.numeric(as.character(data$Installs))
-data$Size<-as.numeric(as.character(data$Size))
 data$Price <- as.numeric(as.character(data$Price))
 data$Reviews <- as.numeric(as.character(data$Reviews))
-
 
 data<-data[complete.cases(data),] 
 
