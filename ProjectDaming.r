@@ -51,7 +51,7 @@ str(data)
 # Korelasi
 library(corrplot)
 c<-data.frame(data)
-correlation<-c[,-c(1,2,7,9:13)] #kecuali atribut 9,10
+correlation<-c[,-c(1,2,6,8:12)] #kecuali yg non numeric
 m<-cor(correlation)
 corrplot(m)
 
