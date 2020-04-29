@@ -13,7 +13,7 @@ md.pattern(data)
 data<-data[complete.cases(data),] 
 md.pattern(data)
 
-# Menghilangkan string + dan , serta mengubah ke numeric
+# Menghilangkan char + dan ,
 library(stringr)
 data$Installs<-str_replace_all(data$Installs,"[+]","")
 data$Installs<-str_replace_all(data$Installs,",","")
@@ -29,9 +29,9 @@ size_k <- gsub('k', '', size_k)
 size_k <- as.numeric(size_k)/1024 
 
 # Menggabungkan kedua size tersebut
-data$size_norm = NA
-data[grep('k', data$Size),]$size_norm <- size_k
-data[grep('M', data$Size),]$size_norm <- size_m
+data$Size_norm = NA
+data[grep('k', data$Size),]$Size_norm <- size_k
+data[grep('M', data$Size),]$Size_norm <- size_m
 
 # Menghapus variable size yg lama
 data$Size <- NULL 
