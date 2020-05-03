@@ -60,9 +60,9 @@ corrplot(m)
 
 #diskretisasi
 library(infotheo)
-ef.install <- discretize(data$Installs,"equalwidth", 3)
-ef.install$X = as.factor(ef.install$X)
-data$class = ef.install$X
+ew.install <- discretize(data$Installs,"equalwidth", 3)
+ew.install$X = as.factor(ew.install$X)
+data$class = ew.install$X
 
 str(data)
 
