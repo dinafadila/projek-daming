@@ -60,7 +60,7 @@ corrplot(m)
 
 #diskretisasi
 library(infotheo)
-ef.install <- discretize(data$Installs,"equalfreq", 5)
+ef.install <- discretize(data$Installs,"equalwidth", 3)
 ef.install$X = as.factor(ef.install$X)
 data$class = ef.install$X
 
@@ -74,7 +74,7 @@ testData <- data[ind==2,]
 
 library(party)
 myFormula <- class ~ Rating + Reviews + Price + Size_norm
-data_ctree <- ctree(myFormula, data = trainData, controls = ctree_control(minsplit = 500))
+data_ctree <- ctree(myFormula, data = trainData)
 
 print(data_ctree)
 plot(data_ctree)
