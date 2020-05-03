@@ -39,6 +39,9 @@ data$Size <- NULL
 # Menghilangkan string $
 data$Price <- gsub('[$]', '', data$Price)
 
+data<-data[complete.cases(data),] 
+
+
 # Ubah factor ke numeric
 data$Installs<-as.numeric(as.character(data$Installs))
 data$Price <- as.numeric(as.character(data$Price))
@@ -54,4 +57,32 @@ c<-data.frame(data)
 correlation<-c[,-c(1,2,6,8:12)] #kecuali yg non numeric
 m<-cor(correlation)
 corrplot(m)
+
+#diskretisasi
+library(infotheo)
+ef.install <- discretize(data$Installs,"equalfreq", 5)
+ef.install$X = as.factor(ef.install$X)
+data$class = ef.install$X
+
+str(data)
+
+set.seed(1234)
+
+ind <- sample(2, nrow(data), replace=TRUE, prob=c(0.7, 0.3))
+trainData <- data[ind==1,]
+testData <- data[ind==2,]
+
+library(party)
+myFormula <- class ~ Rating + Reviews + Price + Size_norm
+data_ctree <- ctree(myFormula, data = trainData, controls = ctree_control(minsplit = 500))
+
+print(data_ctree)
+plot(data_ctree)
+plot(data_ctree, type="simple")
+
+# Memprediksi kelas data pada data testing
+ctree_pred <- predict(data_ctree, newdata = testData)
+library("caret")
+confusionMatrix(ctree_pred, testData$class)
+
 
