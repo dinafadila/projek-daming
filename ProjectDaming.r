@@ -2,16 +2,13 @@ data = read.csv('~/googleplaystore.csv',header=TRUE, sep=',')
 
 #---------------- 1. Pra Proses Data--------------------------
 # Eksplorasi Data
+dim(data)
 summary(data)
 str(data)
 
 # Cek missing value
 library(mice)
 md.pattern(data) 
-
-# Menghilangkan missing value
-data<-data[complete.cases(data),] 
-md.pattern(data)
 
 # Menghilangkan char + dan ,
 library(stringr)
@@ -36,11 +33,16 @@ data[grep('M', data$Size),]$Size_norm <- size_m
 # Menghapus variable size yg lama
 data$Size <- NULL 
 
+# Replace "Varies with device" to NA since it is unknown
+data$Min.Android.Ver = gsub("Varies with device", NA, data$Android.Ver)
+
+# Keep only version number to 1 decimal
+data$Min.Android.Ver = as.numeric(substr(data$Android.Ver, start = 1, stop = 3))
+# Drop old Android version column
+data$Android.Ver = NULL
+
 # Menghilangkan string $
 data$Price <- gsub('[$]', '', data$Price)
-
-data<-data[complete.cases(data),] 
-
 
 # Ubah factor ke numeric
 data$Installs<-as.numeric(as.character(data$Installs))
@@ -49,32 +51,48 @@ data$Reviews <- as.numeric(as.character(data$Reviews))
 
 data<-data[complete.cases(data),] 
 
-str(data)
+data$class[data$Rating <= "2"] <- "TP"
+data$class[data$Rating > "2" & data$Rating <= "4"] <- "P"
+data$class[data$Rating > "4"] <- "SP"
 
-# Korelasi
-library(corrplot)
-c<-data.frame(data)
-correlation<-c[,-c(1,2,6,8:12)] #kecuali yg non numeric
-m<-cor(correlation)
-corrplot(m)
-
-#diskretisasi
-library(infotheo)
-ew.install <- discretize(data$Installs,"equalwidth", 3)
-ew.install$X = as.factor(ew.install$X)
-data$class = ew.install$X
+data$class <- as.factor(data$class)
 
 str(data)
+
+
+# Oversampling
+set.seed(1029)
+final <- data[!(is.na(data$class)),]
+
+final$class <- factor(final$class)
+
+library(caTools)
+
+split <- sample.split(final$class, SplitRatio = 0.75)
+
+dresstrain <- subset(final, split == TRUE)
+dresstest <- subset(final, split == FALSE)
+
+## Let's check the count of unique value in the target variable
+as.data.frame(table(dresstrain$class))
+
+## Loading DMwr to balance the unbalanced class
+library(DMwR)
+
+## Smote : Synthetic Minority Oversampling Technique To Handle Class Imbalancy In Binary Classification
+balanced.data <- SMOTE(class ~., dresstrain, k=5,perc.under = 300, perc.over = 10000 )
+
+as.data.frame(table(balanced.data$class))
 
 set.seed(1234)
 
-ind <- sample(2, nrow(data), replace=TRUE, prob=c(0.7, 0.3))
-trainData <- data[ind==1,]
-testData <- data[ind==2,]
+ind <- sample(2, nrow(balanced.data), replace=TRUE, prob=c(0.6, 0.4))
+trainData <- balanced.data[ind==1,]
+testData <- balanced.data[ind==2,]
 
 library(party)
-myFormula <- class ~ Rating + Reviews + Price + Size_norm
-data_ctree <- ctree(myFormula, data = trainData)
+myFormula <- class ~ Installs + Reviews + Size_norm
+data_ctree <- ctree(myFormula, data = trainData, controls = ctree_control(maxdepth = 12))
 
 print(data_ctree)
 plot(data_ctree)
@@ -84,5 +102,4 @@ plot(data_ctree, type="simple")
 ctree_pred <- predict(data_ctree, newdata = testData)
 library("caret")
 confusionMatrix(ctree_pred, testData$class)
-
 
