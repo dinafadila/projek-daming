@@ -10,6 +10,10 @@ str(data)
 library(mice)
 md.pattern(data) 
 
+# Menghilangkan missing value
+data<-data[complete.cases(data),] 
+md.pattern(data)
+
 # Menghilangkan char + dan ,
 library(stringr)
 data$Installs<-str_replace_all(data$Installs,"[+]","")
@@ -76,11 +80,11 @@ dresstest <- subset(final, split == FALSE)
 ## Let's check the count of unique value in the target variable
 as.data.frame(table(dresstrain$class))
 
-## Loading DMwr to balance the unbalanced class
+## Loading DMwr to balance the unbalanced class, ,, 
 library(DMwR)
 
 ## Smote : Synthetic Minority Oversampling Technique To Handle Class Imbalancy In Binary Classification
-balanced.data <- SMOTE(class ~., dresstrain, k=5,perc.under = 300, perc.over = 10000 )
+balanced.data <- SMOTE(class ~., dresstrain, k=5, perc.under = 300 ,perc.over = 10000 )
 
 as.data.frame(table(balanced.data$class))
 
@@ -101,5 +105,11 @@ plot(data_ctree, type="simple")
 # Memprediksi kelas data pada data testing
 ctree_pred <- predict(data_ctree, newdata = testData)
 library("caret")
+
+# Confusion matrix data test
 confusionMatrix(ctree_pred, testData$class)
+
+# Confusion matrix data train
+ctree_pred <- predict(data_ctree, newdata = trainData)
+confusionMatrix(ctree_pred, trainData$class)
 
