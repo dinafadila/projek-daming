@@ -45,7 +45,12 @@ data$Min.Android.Ver = as.numeric(substr(data$Android.Ver, start = 1, stop = 3))
 # Drop old Android version column
 data$Android.Ver = NULL
 
+data$Curr.Ver = gsub("Varies with device", NA, data$Current.Ver)
+data$Curr.Ver = as.numeric(substr(data$Current.Ver, start = 1, stop = 3))
 # Menghilangkan string $
+data$Current.Ver = NULL
+
+#Menghilangkan noise Price
 data$Price <- gsub('[$]', '', data$Price)
 
 # Ubah factor ke numeric
@@ -53,7 +58,32 @@ data$Installs<-as.numeric(as.character(data$Installs))
 data$Price <- as.numeric(as.character(data$Price))
 data$Reviews <- as.numeric(as.character(data$Reviews))
 
+#Label Encoding Content Rating
+data$ContentR[data$Content.Rating == ""] <- 0
+data$ContentR[data$Content.Rating == "Adults only 18+"] <- 1
+data$ContentR[data$Content.Rating == "Everyone"] <- 2
+data$ContentR[data$Content.Rating == "Everyone 10+"] <- 3
+data$ContentR[data$Content.Rating == "Mature 17+"] <- 4
+data$ContentR[data$Content.Rating == "Teen"] <- 5
+data$ContentR[data$Content.Rating == "Unrated"] <- 6
+data$ContentR = as.numeric(data$ContentR)
+
+#Label encoding Type
+data$newType[data$Type == "0"] <- 0
+data$newType[data$Type == "Free"] <- 0
+data$newType[data$Type == "Paid"] <- 1
+data$newType[data$Type == NaN] <- 0
+
+data$App = NULL
+data$Content.Rating = NULL
+data$Type = NULL
+str(data)
+
+#Erase null values
 data<-data[complete.cases(data),] 
+md.pattern(data) 
+
+str(data)
 
 data$class[data$Rating <= "2"] <- "TP"
 data$class[data$Rating > "2" & data$Rating <= "4"] <- "P"
@@ -67,7 +97,6 @@ str(data)
 # Oversampling
 set.seed(1029)
 final <- data[!(is.na(data$class)),]
-
 final$class <- factor(final$class)
 
 library(caTools)
@@ -90,17 +119,23 @@ as.data.frame(table(balanced.data$class))
 
 set.seed(1234)
 
-ind <- sample(2, nrow(balanced.data), replace=TRUE, prob=c(0.6, 0.4))
+ind <- sample(2, nrow(balanced.data), replace=TRUE, prob=c(0.7, 0.3))
 trainData <- balanced.data[ind==1,]
 testData <- balanced.data[ind==2,]
 
+str(data)
+
 library(party)
-myFormula <- class ~ Installs + Reviews + Size_norm
+myFormula <- class ~ Installs + Reviews + Size_norm + Min.Android.Ver + Price + ContentR + newType + Curr.Ver
 data_ctree <- ctree(myFormula, data = trainData, controls = ctree_control(maxdepth = 12))
 
 print(data_ctree)
 plot(data_ctree)
 plot(data_ctree, type="simple")
+
+# Confusion matrix data train
+ctree_pred <- predict(data_ctree, newdata = trainData)
+confusionMatrix(ctree_pred, trainData$class)
 
 # Memprediksi kelas data pada data testing
 ctree_pred <- predict(data_ctree, newdata = testData)
@@ -108,8 +143,3 @@ library("caret")
 
 # Confusion matrix data test
 confusionMatrix(ctree_pred, testData$class)
-
-# Confusion matrix data train
-ctree_pred <- predict(data_ctree, newdata = trainData)
-confusionMatrix(ctree_pred, trainData$class)
-
