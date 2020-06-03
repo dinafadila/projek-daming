@@ -1,5 +1,6 @@
 data = read.csv('~/googleplaystore.csv',header=TRUE, sep=',')
 
+
 #---------------- 1. Pra Proses Data--------------------------
 # Eksplorasi Data
 dim(data)
@@ -93,6 +94,32 @@ data$class <- as.factor(data$class)
 
 str(data)
 
+#Put all numerical variabel to X
+x = data  
+x$Category = NULL
+x$Rating = NULL
+x$Genres = NULL
+x$Last.Updated = NULL
+x$class = NULL
+str(x)
+
+#Correlation Analysis
+# load library
+library(mlbench)
+library(caret)
+set.seed(7)
+
+# calculate correlation matrix
+correlationMatrix <- cor(x[,1:8])
+
+# summarize the correlation matrix
+print(correlationMatrix)
+
+# find attributes with correlation above 0.75
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.5)
+
+# print the highly correlated attributes
+print(highlyCorrelated)
 
 # Oversampling
 set.seed(1029)
@@ -126,7 +153,7 @@ testData <- balanced.data[ind==2,]
 str(data)
 
 library(party)
-myFormula <- class ~ Installs + Reviews + Size_norm + Min.Android.Ver + Price + ContentR + newType + Curr.Ver
+myFormula <- class ~ Installs + Size_norm + Min.Android.Ver + Price + ContentR + newType + Curr.Ver
 data_ctree <- ctree(myFormula, data = trainData, controls = ctree_control(maxdepth = 12))
 
 print(data_ctree)
